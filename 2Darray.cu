@@ -1,8 +1,10 @@
 //------------------------------------------------------------------------------
+// compile with: nvcc -arch=sm_35 name.cu
+//------------------------------------------------------------------------------
 #include <stdio.h>
 #include <stdlib.h>
 //------------------------------------------------------------------------------
-// the kernels
+// the kernel
 __global__ void matAdd(int *yd, float *Ag, float *Bg, float *Cg) {
   // reverse order of array and gpu idx, to gain speed
   int k = blockIdx.x*blockDim.x + threadIdx.x;

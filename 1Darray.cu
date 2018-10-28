@@ -1,5 +1,8 @@
 //------------------------------------------------------------------------------
+// compile with: nvcc -arch=sm_35 name.cu
+//------------------------------------------------------------------------------
 #include <stdlib.h>
+#include <stdio.h>
  //------------------------------------------------------------------------------
 __global__ void vecAdd(int *xd, float *Ag, float *Bg, float *Cg) {
   // this is a kernel, which state the computations the gpu shall do
@@ -10,14 +13,14 @@ __global__ void vecAdd(int *xd, float *Ag, float *Bg, float *Cg) {
 //------------------------------------------------------------------------------
 int main() {
 int N;
-float *A, *B, *C;
+float *A, *B, *C;  // pointers to float
 float *Ag, *Bg, *Cg;
 int j;
 N = 4;
-int *xd;
+int *xd;  // pointers to int
 int *xdg;
 int *xdn;
-size_t sz = N*sizeof(float);
+size_t sz = N*sizeof(float);  // this is the type of data for allocation funcs
 size_t szi = sizeof(int);
 
 // allocates cpu memory
@@ -36,7 +39,7 @@ for (j = 0; j < N; j++) {
 }
 
 // allocates gpu memory
-cudaMalloc(&xdg, szi);
+cudaMalloc(&xdg, szi);  // notice that the pointer to a pointer is sent to cudaMalloc
 cudaMalloc(&Ag, sz);
 cudaMalloc(&Bg, sz);
 cudaMalloc(&Cg, sz);
@@ -51,9 +54,10 @@ dim3 blocksPerGrid(N/2,1,1);
 // defines the No. of SMs to be used, for each dimension
 dim3 threadsPerBloch(2,1,1);
 // defines the No. of cores per SM to be used, for each dimension
+// and runs the kernel in the gpu
 vecAdd<<<blocksPerGrid, threadsPerBloch>>>(xdg, Ag, Bg, Cg);
-// runs the kernel in the gpu
-cudaThreadSynchronize(); // to wait to the gpu calc to end
+// to wait for the gpu calc to end
+cudaThreadSynchronize();
 
 // copy data from gpu's memory to cpu's memory
 cudaMemcpy(xdn, xdg, szi, cudaMemcpyDeviceToHost);
