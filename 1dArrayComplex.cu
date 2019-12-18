@@ -3,46 +3,49 @@
 //------------------------------------------------------------------------------
 #include <stdlib.h>
 #include <stdio.h>
+#include <cuComplex.h>
+#include <complex.h>
  //-----------------------------------------------------------------------------
-__global__ void vecAdd(int *xd, float *Ag, float *Bg, float *Cg) {
-  // this is a kernel, which state the computations the gpu shall do
-  //int j = threadIdx.x;
+__global__ void vecAdd(double *A, double *B, cuDoubleComplex *C) {
   int j = blockIdx.x*blockDim.x + threadIdx.x;
-  *(Cg+j) = *(Ag+j) + *(Bg+j) + (*xd);
+  *(C+j) = *(A+j) + *(B+j);
 }
 //------------------------------------------------------------------------------
 int main() {
 int N;
-float *A, *B, *C;  // pointers to float
-float *Ag, *Bg, *Cg;
+double *A, *B;
+double _Complex *C;
+double *Ag, *Bg;
+cuDoubleComplex *Cg;
 int j;
 N = 4;
-int *xd;  // pointers to int
+int *xd;
 int *xdg;
 int *xdn;
-size_t sz = N*sizeof(float);  // this is the type of data for allocation funcs
+size_t sz = N*sizeof(double);
+size_t sz_ = N*sizeof(double _Complex);
 size_t szi = sizeof(int);
 
 // allocates cpu memory
-A = (float *)malloc(sz);
-B = (float *)malloc(sz);
-C = (float *)malloc(sz);
+A = (double *)malloc(sz);
+B = (double *)malloc(sz);
+C = (double _Complex *)malloc(sz_);
 xd = (int *)malloc(szi);
 *xd = N;
 xdn = (int *)malloc(szi);
 
 printf("serial calc \n");
 for (j = 0; j < N; j++) {
-  A[j] = (float)j;  B[j] = (float)j;
-  *(C+j) = *(A+j) + *(B+j) + (*xd);
-  printf("A= %f B= %f A+B+xd= %f \n", *(A+j), *(B+j), *(C+j));
+  A[j] = (double)j;  B[j] = 2*(double)j;
+  *(C+j) = *(A+j) + *(B+j);
+  printf("A= %f B= %f A+B= %f \n", *(A+j), *(B+j), *(C+j));
 }
 
 // allocates gpu memory
 cudaMalloc(&xdg, szi);  // notice that the pointer to a pointer is sent to cudaMalloc
 cudaMalloc(&Ag, sz);
 cudaMalloc(&Bg, sz);
-cudaMalloc(&Cg, sz);
+cudaMalloc(&Cg, sz_);
 
 // copy data from cpu's memory to gpu's memory
 cudaMemcpy(xdg, xd, szi, cudaMemcpyHostToDevice);
